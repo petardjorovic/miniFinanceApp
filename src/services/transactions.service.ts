@@ -70,3 +70,22 @@ export const createTransactionService = async (data: CreateTransactionDTO) => {
     throw error;
   }
 };
+
+export const deleteTransactionService = async (
+  userId: number,
+  transactionId: number,
+) => {
+  try {
+    const deletedTransaction = await prisma.transaction.delete({
+      where: { id: transactionId, userId },
+      include: { category: true },
+    });
+
+    return deletedTransaction;
+  } catch (error: any) {
+    if (error.code === "P2025") {
+      throw new Error("Transaction not found");
+    }
+    throw error;
+  }
+};

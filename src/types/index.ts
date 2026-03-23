@@ -8,9 +8,9 @@ export interface GetTransactionsParams {
   userId: number;
   page: number;
   limit: number;
-  filter?: string;
-  sort?: "Latest" | "Oldest" | "A-Z" | "Z-A" | "Highest" | "Lowest";
-  search?: string;
+  filter: string | undefined;
+  sort: "Latest" | "Oldest" | "A-Z" | "Z-A" | "Highest" | "Lowest" | undefined;
+  search: string | undefined;
 }
 export interface CreateTransactionDTO {
   userId: number;
