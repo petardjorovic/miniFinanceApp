@@ -21,3 +21,19 @@ export const getTransactionsQuerySchema = z.object({
     .optional(),
   search: z.string().min(1).optional(),
 });
+
+export const createTransactionBodySchema = z.object({
+  amount: z.number(),
+  date: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid date format",
+  }),
+  description: z.string().min(1),
+  categoryId: z.number().transform((val) => Number(val)),
+});
+
+export const updateTransactionBodySchema =
+  createTransactionBodySchema.partial();
+
+export type GetTransactionsQuery = z.infer<typeof getTransactionsQuerySchema>;
+export type CreateTransactionBody = z.infer<typeof createTransactionBodySchema>;
+export type UpdateTransactionBody = z.infer<typeof updateTransactionBodySchema>;

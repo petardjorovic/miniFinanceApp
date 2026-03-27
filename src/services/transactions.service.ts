@@ -1,11 +1,12 @@
 import { prisma } from "../lib/prisma.js";
+import type { UpdateTransactionBody } from "../schemas/transactions.schema.js";
 import type {
   CreateTransactionDTO,
   GetTransactionsParams,
 } from "../types/index.js";
 
-export const getTransactionsService = async (params: GetTransactionsParams) => {
-  const { userId, page = 1, limit = 10, filter, sort, search } = params;
+export const getTransactionsService = async (data: GetTransactionsParams) => {
+  const { userId, page = 1, limit = 10, filter, sort, search } = data;
 
   const safePage = Math.max(page, 1);
   const skip = (safePage - 1) * limit;
@@ -47,6 +48,22 @@ export const getTransactionsService = async (params: GetTransactionsParams) => {
   return { transactions, total, page: safePage, limit };
 };
 
+export const getTransactionService = async (transactionId: number) => {
+  try {
+    const transaction = await prisma.transaction.findUniqueOrThrow({
+      where: { id: transactionId },
+      include: { category: true },
+    });
+
+    return transaction;
+  } catch (error: any) {
+    if (error.code === "P2025") {
+      throw new Error("Transaction not found");
+    }
+    throw error;
+  }
+};
+
 export const createTransactionService = async (data: CreateTransactionDTO) => {
   const { userId, amount, date, description, categoryId } = data;
 
@@ -63,6 +80,49 @@ export const createTransactionService = async (data: CreateTransactionDTO) => {
     });
 
     return newTransaction;
+  } catch (error: any) {
+    if (error.code === "P2003") {
+      throw new Error("Category not found");
+    }
+    throw error;
+  }
+};
+
+export const updateTransactionService = async (
+  userId: number,
+  transactionId: number,
+  data: UpdateTransactionBody,
+) => {
+  const { amount, description, date, categoryId } = data;
+
+  const dataForUpdate: Record<string, number | string> = {};
+  if (amount !== undefined) dataForUpdate.amount = amount;
+  if (description !== undefined) dataForUpdate.description = description;
+  if (date !== undefined) dataForUpdate.date = date;
+  if (categoryId !== undefined) dataForUpdate.categoryId = categoryId;
+
+  if (Object.keys(dataForUpdate).length === 0) {
+    throw new Error("No valid fields provided for update");
+  }
+  try {
+    const existingTransaction = await prisma.transaction.findFirst({
+      where: { id: transactionId, userId },
+    });
+
+    if (!existingTransaction) {
+      throw new Error("Transaction not found");
+    }
+
+    const updatedTransaction = await prisma.transaction.update({
+      where: {
+        id: existingTransaction.id,
+      },
+      data: dataForUpdate,
+      include: {
+        category: true,
+      },
+    });
+    return updatedTransaction;
   } catch (error: any) {
     if (error.code === "P2003") {
       throw new Error("Category not found");
