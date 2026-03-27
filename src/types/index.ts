@@ -15,6 +15,7 @@ export interface GetTransactionsParams {
 export interface CreateTransactionDTO {
   userId: number;
   amount: number;
+  type: "INCOME" | "EXPENSE";
   description: string;
   date: Date;
   categoryId: number;

@@ -1,5 +1,8 @@
 import { prisma } from "../lib/prisma.js";
-import type { UpdateTransactionBody } from "../schemas/transactions.schema.js";
+import type {
+  CreateTransactionBody,
+  UpdateTransactionBody,
+} from "../schemas/transactions.schema.js";
 import type {
   CreateTransactionDTO,
   GetTransactionsParams,
@@ -65,13 +68,14 @@ export const getTransactionService = async (transactionId: number) => {
 };
 
 export const createTransactionService = async (data: CreateTransactionDTO) => {
-  const { userId, amount, date, description, categoryId } = data;
+  const { userId, amount, type, date, description, categoryId } = data;
 
   try {
     const newTransaction = await prisma.transaction.create({
       data: {
         userId,
         amount,
+        type,
         date,
         description,
         categoryId,
@@ -93,13 +97,14 @@ export const updateTransactionService = async (
   transactionId: number,
   data: UpdateTransactionBody,
 ) => {
-  const { amount, description, date, categoryId } = data;
+  const { amount, description, date, categoryId, type } = data;
 
   const dataForUpdate: Record<string, number | string> = {};
   if (amount !== undefined) dataForUpdate.amount = amount;
   if (description !== undefined) dataForUpdate.description = description;
   if (date !== undefined) dataForUpdate.date = date;
   if (categoryId !== undefined) dataForUpdate.categoryId = categoryId;
+  if (type !== undefined) dataForUpdate.type = type;
 
   if (Object.keys(dataForUpdate).length === 0) {
     throw new Error("No valid fields provided for update");
@@ -148,4 +153,54 @@ export const deleteTransactionService = async (
     }
     throw error;
   }
+};
+
+export const getTotalsService = async (
+  userId: number,
+  start: Date | undefined,
+  end: Date | undefined,
+) => {
+  const date: Record<string, Date> = {};
+  if (start) date.gte = start;
+  if (end) date.lte = end;
+  const [income, expense] = await Promise.all([
+    prisma.transaction.aggregate({
+      where: {
+        userId,
+        type: "INCOME",
+        date,
+      },
+      _sum: { amount: true },
+    }),
+    prisma.transaction.aggregate({
+      where: {
+        userId,
+        type: "EXPENSE",
+      },
+      _sum: { amount: true },
+    }),
+  ]);
+
+  const totalIncome = income._sum.amount ?? 0;
+  const totalExpense = expense._sum.amount ?? 0;
+
+  // const result = await prisma.transaction.groupBy({
+  //   by: ["type"],
+  //   where: { userId },
+  //   _sum: { amount: true },
+  // });
+
+  // let totalIncome = 0;
+  // let totalExpense = 0;
+
+  // for(const item of result){
+  //   if(item.type === "INCOME"){
+  //     totalIncome = item._sum.amount ?? 0;
+  //   }
+  //   if(item.type === "EXPENSE"){
+  //     totalExpense = item._sum.amount ?? 0;
+  //   }
+  // }
+
+  return { totalIncome, totalExpense };
 };

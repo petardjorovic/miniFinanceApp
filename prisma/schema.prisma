@@ -36,9 +36,11 @@ model Transaction {
   category Category @relation(fields: [categoryId], references: [id])
   categoryId Int @map("category_id")
 
-  amount Decimal
+  amount Decimal @db.Decimal(10, 2)
   description String?
   date DateTime
+  type TransactionType @default(EXPENSE)
+
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -65,4 +67,9 @@ model Category {
 enum Role {
   USER
   ADMIN
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
 }

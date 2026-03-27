@@ -24,6 +24,7 @@ export const getTransactionsQuerySchema = z.object({
 
 export const createTransactionBodySchema = z.object({
   amount: z.number(),
+  type: z.enum(["INCOME", "EXPENSE"]),
   date: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: "Invalid date format",
   }),
@@ -34,6 +35,12 @@ export const createTransactionBodySchema = z.object({
 export const updateTransactionBodySchema =
   createTransactionBodySchema.partial();
 
+export const getTotalsQuerySchema = z.object({
+  start: z.string().optional(),
+  end: z.string().optional(),
+});
+
 export type GetTransactionsQuery = z.infer<typeof getTransactionsQuerySchema>;
 export type CreateTransactionBody = z.infer<typeof createTransactionBodySchema>;
 export type UpdateTransactionBody = z.infer<typeof updateTransactionBodySchema>;
+export type GetTotalsQuery = z.infer<typeof getTotalsQuerySchema>;

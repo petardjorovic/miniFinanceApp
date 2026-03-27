@@ -2,12 +2,14 @@ import type { Request, Response } from "express";
 import {
   createTransactionService,
   deleteTransactionService,
+  getTotalsService,
   getTransactionService,
   getTransactionsService,
   updateTransactionService,
 } from "../services/transactions.service.js";
 import {
   createTransactionBodySchema,
+  getTotalsQuerySchema,
   getTransactionsQuerySchema,
   updateTransactionBodySchema,
 } from "../schemas/transactions.schema.js";
@@ -15,7 +17,7 @@ import {
 export const getTransactions = async (req: Request, res: Response) => {
   const { page, limit, filter, sort, search } =
     getTransactionsQuerySchema.parse(req.query);
-  const userId = 2;
+  const userId = 1;
   try {
     const {
       transactions: tx,
@@ -55,14 +57,15 @@ export const getTransaction = async (req: Request, res: Response) => {
 };
 
 export const createTransaction = async (req: Request, res: Response) => {
-  const userId = 2;
-  const { amount, date, description, categoryId } =
+  const userId = 1;
+  const { amount, date, description, categoryId, type } =
     createTransactionBodySchema.parse(req.body);
 
   try {
     const newTransaction = await createTransactionService({
       userId,
       amount,
+      type,
       description,
       date: new Date(date),
       categoryId,
@@ -110,4 +113,21 @@ export const deleteTransaction = async (req: Request, res: Response) => {
   } catch (error) {
     throw error;
   }
+};
+
+export const getTotals = async (req: Request, res: Response) => {
+  const userId = 1;
+  const { start, end } = getTotalsQuerySchema.parse(req.query);
+  let startDate: Date | undefined;
+  let endDate: Date | undefined;
+  if (start) startDate = new Date(start);
+  if (end) endDate = new Date(end);
+
+  const { totalIncome, totalExpense } = await getTotalsService(
+    userId,
+    startDate,
+    endDate,
+  );
+
+  return res.status(200).json({ success: "ok", totalIncome, totalExpense });
 };
