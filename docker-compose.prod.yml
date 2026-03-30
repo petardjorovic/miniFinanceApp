@@ -14,6 +14,7 @@ services:
     build:
       context: .
       target: production
+    container_name: backend_prod_app
     depends_on:
       - postgres
     env_file:

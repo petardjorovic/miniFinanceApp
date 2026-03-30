@@ -5,7 +5,7 @@ import {
 } from "../services/users.service.js";
 
 export const getUser = async (req: Request, res: Response) => {
-  const userId = 11;
+  const userId = 1;
 
   try {
     const user = await getUserService(Number(userId));
